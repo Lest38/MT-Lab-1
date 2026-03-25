@@ -1,0 +1,34 @@
+{
+  "pipeline": [
+    {
+      "name": "Git Clone",
+      "command": "git",
+      "args": "clone https://gitlab.com/antonoveducationprojects/codeexamples/cs/processesandmultithreading/netautobuildexample",
+      "stopOnFailure": true
+    },
+    {
+      "name": "Clean",
+      "command": "dotnet",
+      "args": "clean",
+      "stopOnFailure": true
+    },
+    {
+      "name": "Build",
+      "command": "dotnet",
+      "args": "build",
+      "stopOnFailure": true
+    },
+    {
+      "name": "Unit Tests",
+      "command": "dotnet",
+      "args": "test",
+      "stopOnFailure": false
+    },
+    {
+      "name": "Run App",
+      "command": "dotnet",
+      "args": "run",
+      "stopOnFailure": false
+    }
+  ]
+}
