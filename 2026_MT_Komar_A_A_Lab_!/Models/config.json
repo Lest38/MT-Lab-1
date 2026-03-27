@@ -1,34 +1,51 @@
 {
   "pipeline": [
     {
-      "name": "Git Clone",
+      "name": "Clone Repository",
       "command": "git",
-      "args": "clone https://gitlab.com/antonoveducationprojects/codeexamples/cs/processesandmultithreading/netautobuildexample",
-      "stopOnFailure": true
+      "args": "clone https://github.com/example/repo.git",
+      "stopOnFailure": true,
+      "timeoutSeconds": 300
     },
     {
-      "name": "Clean",
+      "name": "Restore Packages",
+      "command": "dotnet",
+      "args": "restore",
+      "stopOnFailure": true,
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "Clean Solution",
       "command": "dotnet",
       "args": "clean",
-      "stopOnFailure": true
+      "stopOnFailure": false,
+      "timeoutSeconds": 60
     },
     {
-      "name": "Build",
+      "name": "Build Solution",
       "command": "dotnet",
-      "args": "build",
-      "stopOnFailure": true
+      "args": "build --configuration Release",
+      "stopOnFailure": true,
+      "timeoutSeconds": 300
     },
     {
-      "name": "Unit Tests",
+      "name": "Run Unit Tests",
       "command": "dotnet",
-      "args": "test",
-      "stopOnFailure": false
+      "args": "test --configuration Release --no-build",
+      "stopOnFailure": false,
+      "timeoutSeconds": 120
     },
     {
-      "name": "Run App",
+      "name": "Run Application",
       "command": "dotnet",
-      "args": "run",
-      "stopOnFailure": false
+      "args": "run --configuration Release",
+      "stopOnFailure": false,
+      "timeoutSeconds": 30
     }
-  ]
+  ],
+  "settings": {
+    "continueOnError": false,
+    "maxParallelStages": 1,
+    "artifactsPath": "./artifacts"
+  }
 }
