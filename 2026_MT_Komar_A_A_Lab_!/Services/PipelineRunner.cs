@@ -1,10 +1,8 @@
 ﻿using _2026_MT_Komar_A_A_Lab__.Models;
-using _2026_MT_Komar_A_A_Lab__.Services;
-using CICD.SyncVersion.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace CICD.SyncVersion;
+namespace _2026_MT_Komar_A_A_Lab__.Services;
 
 public class PipelineRunner
 {

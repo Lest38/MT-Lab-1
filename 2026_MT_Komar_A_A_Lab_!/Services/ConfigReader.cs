@@ -71,10 +71,14 @@ public class ConfigReader
         foreach (var stage in config.Pipeline)
         {
             if (string.IsNullOrEmpty(stage.Name))
+            {
                 throw new InvalidDataException("Each pipeline stage must have a name");
+            }
 
             if (string.IsNullOrEmpty(stage.Command))
+            {
                 throw new InvalidDataException($"Stage '{stage.Name}' must have a command");
+            }
         }
     }
 }
