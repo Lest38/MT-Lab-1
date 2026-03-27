@@ -1,8 +1,7 @@
 ﻿using _2026_MT_Komar_A_A_Lab__.Models;
-using _2026_MT_Komar_A_A_Lab__.Services;
 using Microsoft.Extensions.Logging;
 
-namespace CICD.SyncVersion.Services;
+namespace _2026_MT_Komar_A_A_Lab__.Services;
 
 public class GitService
 {
