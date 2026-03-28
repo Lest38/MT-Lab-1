@@ -1,4 +1,6 @@
-﻿namespace _2026_MT_Komar_A_A_Lab__.Models
+﻿using System;
+
+namespace _2026_MT_Komar_A_A_Lab__.Models
 {
     public class ProcessResult
     {

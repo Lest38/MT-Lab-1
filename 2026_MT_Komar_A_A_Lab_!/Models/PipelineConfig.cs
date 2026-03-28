@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace _2026_MT_Komar_A_A_Lab__.Models
 {
@@ -6,8 +7,5 @@ namespace _2026_MT_Komar_A_A_Lab__.Models
     {
         [JsonPropertyName("pipeline")]
         public List<PipelineItem> Pipeline { get; set; } = new();
-
-        [JsonPropertyName("settings")]
-        public PipelineSettings? Settings { get; set; }
     }
 }
