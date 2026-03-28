@@ -1,0 +1,50 @@
+{
+  "pipeline": [
+    {
+      "name": "Check Environment",
+      "command": "dotnet",
+      "args": "--info",
+      "stopOnFailure": true,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "Check Git Version",
+      "command": "git",
+      "args": "--version",
+      "stopOnFailure": false,
+      "timeoutSeconds": 10
+    },
+    {
+      "name": "Create Test Project",
+      "command": "dotnet",
+      "args": "new console -n TestApp",
+      "stopOnFailure": true,
+      "timeoutSeconds": 30,
+      "workingDirectory": "test_target"
+    },
+    {
+      "name": "Restore Packages",
+      "command": "dotnet",
+      "args": "restore",
+      "stopOnFailure": true,
+      "timeoutSeconds": 60,
+      "workingDirectory": "test_target/TestApp"
+    },
+    {
+      "name": "Build",
+      "command": "dotnet",
+      "args": "build --configuration Release",
+      "stopOnFailure": true,
+      "timeoutSeconds": 60,
+      "workingDirectory": "test_target/TestApp"
+    },
+    {
+      "name": "Run",
+      "command": "dotnet",
+      "args": "run",
+      "stopOnFailure": false,
+      "timeoutSeconds": 5,
+      "workingDirectory": "test_target/TestApp"
+    }
+  ]
+}
