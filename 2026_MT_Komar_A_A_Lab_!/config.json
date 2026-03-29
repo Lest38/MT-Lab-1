@@ -1,29 +1,36 @@
 {
   "pipeline": [
     {
-      "name": "Check Environment",
+      "name": "Check dotnet version",
       "command": "dotnet",
-      "args": "--info",
-      "stopOnFailure": true,
-      "timeoutSeconds": 30
-    },
-    {
-      "name": "Check Git Version",
-      "command": "git",
       "args": "--version",
-      "stopOnFailure": false,
+      "stopOnFailure": true,
       "timeoutSeconds": 10
     },
     {
-      "name": "Create Test Project",
+      "name": "Check git version",
+      "command": "git",
+      "args": "--version",
+      "stopOnFailure": true,
+      "timeoutSeconds": 10
+    },
+    {
+      "name": "Check current directory",
+      "command": "cmd",
+      "args": "/c echo %CD%",
+      "stopOnFailure": false,
+      "timeoutSeconds": 5
+    },
+    {
+      "name": "Create test project",
       "command": "dotnet",
-      "args": "new console -n TestApp",
+      "args": "new console -n TestApp -o TestApp",
       "stopOnFailure": true,
       "timeoutSeconds": 30,
       "workingDirectory": "test_target"
     },
     {
-      "name": "Restore Packages",
+      "name": "Restore packages",
       "command": "dotnet",
       "args": "restore",
       "stopOnFailure": true,
@@ -31,19 +38,19 @@
       "workingDirectory": "test_target/TestApp"
     },
     {
-      "name": "Build",
+      "name": "Build project",
       "command": "dotnet",
-      "args": "build --configuration Release",
+      "args": "build",
       "stopOnFailure": true,
       "timeoutSeconds": 60,
       "workingDirectory": "test_target/TestApp"
     },
     {
-      "name": "Run",
+      "name": "Run application",
       "command": "dotnet",
       "args": "run",
       "stopOnFailure": false,
-      "timeoutSeconds": 5,
+      "timeoutSeconds": 10,
       "workingDirectory": "test_target/TestApp"
     }
   ]
