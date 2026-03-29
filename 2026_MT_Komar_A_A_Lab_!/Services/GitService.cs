@@ -46,15 +46,6 @@ public class GitService
         );
     }
 
-    public async Task<ProcessResult> GetCommitHashAsync(string targetDir)
-    {
-        return await _processRunner.RunCommandAsync(
-            "git",
-            "rev-parse HEAD",
-            targetDir
-        );
-    }
-
     public async Task<ProcessResult> GetStatusAsync(string targetDir)
     {
         return await _processRunner.RunCommandAsync(

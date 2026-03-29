@@ -4,16 +4,10 @@ using System;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
-public class ConfigurationService
+public class ConfigurationService(ILogger<ConfigurationService> logger, ConfigReader configReader)
 {
-    private readonly ILogger<ConfigurationService> _logger;
-    private readonly ConfigReader _configReader;
-
-    public ConfigurationService(ILogger<ConfigurationService> logger, ConfigReader configReader)
-    {
-        _logger = logger;
-        _configReader = configReader;
-    }
+    private readonly ILogger<ConfigurationService> _logger = logger;
+    private readonly ConfigReader _configReader = configReader;
 
     public PipelineConfig LoadConfiguration(string configPath)
     {

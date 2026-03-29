@@ -40,14 +40,6 @@ namespace _2026_MT_Komar_A_A_Lab__.Services
             return result;
         }
 
-        public async Task<ProcessResult> RunCommandWithOutputAsync(
-            string fileName,
-            string arguments,
-            string workingDirectory)
-        {
-            return await RunCommandAsync(fileName, arguments, workingDirectory, waitForExit: true);
-        }
-
         private ProcessResult InitializeResult(string fileName, string arguments, string workingDirectory)
         {
             return new ProcessResult
