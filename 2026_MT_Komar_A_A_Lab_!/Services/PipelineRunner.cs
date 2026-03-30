@@ -39,7 +39,10 @@ public class PipelineRunner
         var config = _configService.LoadConfiguration(configPath);
         _logger.LogInformation("Loaded pipeline with {StageCount} stages", config.Pipeline.Count);
 
-        var stats = new PipelineStats();
+        var stats = new PipelineStats
+        {
+            TotalStages = config.Pipeline.Count
+        };
 
         foreach (var stage in config.Pipeline)
         {
@@ -193,9 +196,8 @@ public class PipelineRunner
 
                 "dotnet" when stage.Args.Contains("test") =>
                     await _dotNetService.TestAsync(workingDir),
-
                 "dotnet" when stage.Args.Contains("run") =>
-                    await _dotNetService.RunAsync(workingDir, waitForExit: false),
+                    await _dotNetService.RunAsync(workingDir, waitForExit: true),
 
                 _ => await _processRunner.RunCommandAsync(
                     stage.Command,

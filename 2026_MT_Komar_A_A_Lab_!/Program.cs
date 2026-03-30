@@ -1,4 +1,5 @@
 ﻿using _2026_MT_Komar_A_A_Lab__.Services;
+using _2026_MT_Komar_A_A_Lab__.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -38,8 +39,11 @@ class Program
             Directory.CreateDirectory(targetDir);
         }
 
+        var logFilePath = LogFileGenerator.GenerateLogFilePath(targetDir);
+        Console.WriteLine($"\nLog file: {logFilePath}");
+
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, logFilePath);
 
         var serviceProvider = services.BuildServiceProvider();
         var pipelineRunner = serviceProvider.GetRequiredService<PipelineRunner>();
@@ -73,15 +77,17 @@ class Program
         Console.ReadKey();
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services, string logFilePath)
     {
         services.AddLogging(configure =>
         {
             configure.AddConsole();
+            configure.AddProvider(new FileLoggerProvider(logFilePath));
             configure.SetMinimumLevel(LogLevel.Debug);
         });
 
         services.AddSingleton<ConfigReader>();
+        services.AddSingleton<ProjectResolver>();
         services.AddTransient<ProcessRunner>();
         services.AddTransient<PipelineRunner>();
         services.AddTransient<GitService>();
