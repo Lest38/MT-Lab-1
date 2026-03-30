@@ -1,5 +1,4 @@
 ﻿using _2026_MT_Komar_A_A_Lab__.Models;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.Text;
@@ -8,12 +7,6 @@ using System.Threading.Tasks;
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 public class ProcessRunner
 {
-    private readonly ILogger<ProcessRunner> _logger;
-
-    public ProcessRunner(ILogger<ProcessRunner> logger)
-    {
-        _logger = logger;
-    }
 
     public async Task<ProcessResult> RunCommandAsync(
         string fileName,
