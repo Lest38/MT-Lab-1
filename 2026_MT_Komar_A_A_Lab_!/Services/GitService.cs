@@ -37,7 +37,7 @@ public class GitService
 
             if (files.Length > 0)
             {
-                _logger.LogWarning("Target directory {TargetDir} is not empty. Found {FileCount} non-log files.",
+                _logger.LogWarning("Target directory {TargetDir} is not empty. Found {FileCount} files.",
                     cloneTargetDir, files.Length);
 
                 return CreateSuccessResult("git", $"clone {repoUrl}",
@@ -65,10 +65,8 @@ public class GitService
 
     public async Task<ProcessResult> PullAsync(string targetDir)
     {
-        if (!Directory.Exists(targetDir))
-        {
-            return CreateErrorResult("pull", targetDir, "Directory does not exist");
-        }
+        if (!TryEnsureDirectoryExists(targetDir, out var errorResult))
+            return errorResult!;
 
         _logger.LogInformation("Pulling latest changes in {TargetDir}", targetDir);
         return await _processRunner.RunCommandAsync(
@@ -81,10 +79,8 @@ public class GitService
 
     public async Task<ProcessResult> GetCurrentBranchAsync(string targetDir)
     {
-        if (!Directory.Exists(targetDir))
-        {
-            return CreateErrorResult("rev-parse --abbrev-ref HEAD", targetDir, "Directory does not exist");
-        }
+        if (!TryEnsureDirectoryExists(targetDir, out var errorResult))
+            return errorResult!;
 
         return await _processRunner.RunCommandAsync(
             "git",
@@ -95,16 +91,25 @@ public class GitService
 
     public async Task<ProcessResult> GetStatusAsync(string targetDir)
     {
-        if (!Directory.Exists(targetDir))
-        {
-            return CreateErrorResult("status --short", targetDir, "Directory does not exist");
-        }
+        if (!TryEnsureDirectoryExists(targetDir, out var errorResult))
+            return errorResult!;
 
         return await _processRunner.RunCommandAsync(
             "git",
             "status --short",
             targetDir
         );
+    }
+
+    private bool TryEnsureDirectoryExists(string targetDir, out ProcessResult? errorResult)
+    {
+        if (!Directory.Exists(targetDir))
+        {
+            errorResult = CreateErrorResult("command", targetDir, "Directory does not exist");
+            return false;
+        }
+        errorResult = null;
+        return true;
     }
 
     private ProcessResult CreateErrorResult(string command, string targetDir, string errorMessage)
