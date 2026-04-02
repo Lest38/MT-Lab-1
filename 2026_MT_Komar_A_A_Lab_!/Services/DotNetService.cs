@@ -30,7 +30,7 @@ public class DotNetService
             args,
             targetDir,
             waitForExit,
-            timeoutSeconds: 300
+            timeoutSeconds: TimeoutDefaults.General
         );
     }
 

@@ -2,34 +2,37 @@
 using System;
 using System.IO;
 
-public class FileLogger : ILogger
+namespace _2026_MT_Komar_A_A_Lab__.Utilities
 {
-    private readonly string _filePath;
-    private static readonly object _lock = new();
-
-    public FileLogger(string filePath)
+    public class FileLogger : ILogger
     {
-        _filePath = filePath;
-    }
+        private readonly string _filePath;
+        private static readonly object _lock = new();
 
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-        => default!;
-
-    public bool IsEnabled(LogLevel logLevel) => true;
-
-    public void Log<TState>(
-        LogLevel logLevel,
-        EventId eventId,
-        TState state,
-        Exception? exception,
-        Func<TState, Exception?, string> formatter)
-    {
-        var message = formatter(state, exception);
-
-        lock (_lock)
+        public FileLogger(string filePath)
         {
-            File.AppendAllText(_filePath,
-                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{logLevel}] {message}{Environment.NewLine}");
+            _filePath = filePath;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+            => default!;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            var message = formatter(state, exception);
+
+            lock (_lock)
+            {
+                File.AppendAllText(_filePath,
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{logLevel}] {message}{Environment.NewLine}");
+            }
         }
     }
 }
