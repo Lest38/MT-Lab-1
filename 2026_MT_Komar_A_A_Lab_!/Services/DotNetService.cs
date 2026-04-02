@@ -4,21 +4,14 @@ using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
-public class DotNetService
+public class DotNetService(
+    ProcessRunner processRunner,
+    ProjectResolver projectResolver,
+    ILogger<DotNetService> logger)
 {
-    private readonly ProcessRunner _processRunner;
-    private readonly ProjectResolver _projectResolver;
-    private readonly ILogger<DotNetService> _logger;
-
-    public DotNetService(
-        ProcessRunner processRunner,
-        ProjectResolver projectResolver,
-        ILogger<DotNetService> logger)
-    {
-        _processRunner = processRunner;
-        _projectResolver = projectResolver;
-        _logger = logger;
-    }
+    private readonly ProcessRunner _processRunner = processRunner;
+    private readonly ProjectResolver _projectResolver = projectResolver;
+    private readonly ILogger<DotNetService> _logger = logger;
 
     public async Task<ProcessResult> RunCommandAsync(string targetDir, string args, bool waitForExit = true)
     {

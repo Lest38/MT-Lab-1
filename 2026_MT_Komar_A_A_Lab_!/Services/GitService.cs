@@ -7,21 +7,15 @@ using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
-public class GitService
+public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
 {
-    private readonly ProcessRunner _processRunner;
-    private readonly ILogger<GitService> _logger;
-
-    public GitService(ProcessRunner processRunner, ILogger<GitService> logger)
-    {
-        _processRunner = processRunner;
-        _logger = logger;
-    }
+    private readonly ProcessRunner _processRunner = processRunner;
+    private readonly ILogger<GitService> _logger = logger;
 
     public async Task<ProcessResult> CloneAsync(string targetDir, string repoUrl)
     {
         string cloneTargetDir = targetDir;
-        string? repoSubDir = null;
+        string? repoSubDir;
 
         var parts = repoUrl.Split([' '], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length > 1)
