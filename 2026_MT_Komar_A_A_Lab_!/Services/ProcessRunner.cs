@@ -5,8 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
-public class ProcessRunner
+
+public class ProcessRunner : IDisposable
 {
+    private Process? _currentProcess;
+    private bool _disposed;
 
     public async Task<ProcessResult> RunCommandAsync(
         string fileName,
@@ -34,7 +37,7 @@ public class ProcessRunner
             CreateNoWindow = true
         };
 
-        var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
@@ -105,5 +108,33 @@ public class ProcessRunner
         }
 
         return result;
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing && _currentProcess != null && !_currentProcess.HasExited)
+        {
+            try
+            {
+                _currentProcess.Kill();
+            }
+            catch
+            {
+                // The process have already exited or we can't kill it, so we ignore exceptions here
+            }
+            _currentProcess.Dispose();
+            _currentProcess = null;
+        }
+
+        _disposed = true;
     }
 }
