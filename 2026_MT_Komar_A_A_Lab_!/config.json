@@ -1,57 +1,43 @@
 {
   "pipeline": [
     {
-      "name": "Check dotnet version",
-      "command": "dotnet",
-      "args": "--version",
-      "stopOnFailure": true,
-      "timeoutSeconds": 10
-    },
-    {
-      "name": "Check git version",
+      "name": "Git Clone",
       "command": "git",
-      "args": "--version",
+      "args": "clone https://gitlab.com/antonoveducationprojects/codeexamples/cs/processesandmultithreading/netautobuildexample repo",
       "stopOnFailure": true,
-      "timeoutSeconds": 10
+      "timeoutSeconds": 300
     },
     {
-      "name": "Check current directory",
-      "command": "cmd",
-      "args": "/c echo %CD%",
+      "name": "Clean",
+      "command": "dotnet",
+      "args": "clean",
+      "stopOnFailure": true,
+      "timeoutSeconds": 60,
+      "workingDirectory": "test_target/repo"
+    },
+    {
+      "name": "Build",
+      "command": "dotnet",
+      "args": "build --configuration Release",
+      "stopOnFailure": true,
+      "timeoutSeconds": 300,
+      "workingDirectory": "test_target/repo"
+    },
+    {
+      "name": "Unit Tests",
+      "command": "dotnet",
+      "args": "test --configuration Release --no-build",
       "stopOnFailure": false,
-      "timeoutSeconds": 5
+      "timeoutSeconds": 120,
+      "workingDirectory": "test_target/repo"
     },
     {
-      "name": "Create test project",
-      "command": "dotnet",
-      "args": "new console -n TestApp -o TestApp",
-      "stopOnFailure": true,
-      "timeoutSeconds": 30,
-      "workingDirectory": "test_target"
-    },
-    {
-      "name": "Restore packages",
-      "command": "dotnet",
-      "args": "restore",
-      "stopOnFailure": true,
-      "timeoutSeconds": 60,
-      "workingDirectory": "test_target/TestApp"
-    },
-    {
-      "name": "Build project",
-      "command": "dotnet",
-      "args": "build",
-      "stopOnFailure": true,
-      "timeoutSeconds": 60,
-      "workingDirectory": "test_target/TestApp"
-    },
-    {
-      "name": "Run application",
-      "command": "dotnet",
-      "args": "run",
+      "name": "Run Child App EXE",
+      "command": "cmd",
+      "args": "/c start /wait ConsoleChildApp\\bin\\Release\\net8.0\\ConsoleChildApp.exe",
       "stopOnFailure": false,
       "timeoutSeconds": 10,
-      "workingDirectory": "test_target/TestApp"
+      "workingDirectory": "test_target/repo"
     }
   ]
 }
