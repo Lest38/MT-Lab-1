@@ -1,0 +1,43 @@
+{
+  "pipeline": [
+    {
+      "name": "Git Clone",
+      "command": "git",
+      "args": "clone https://gitlab.com/antonoveducationprojects/codeexamples/cs/processesandmultithreading/netautobuildexample repo",
+      "stopOnFailure": true,
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "Clean",
+      "command": "dotnet",
+      "args": "clean",
+      "stopOnFailure": true,
+      "timeoutSeconds": 60,
+      "workingDirectory": "test_target/repo"
+    },
+    {
+      "name": "Build",
+      "command": "dotnet",
+      "args": "build --configuration Release",
+      "stopOnFailure": true,
+      "timeoutSeconds": 300,
+      "workingDirectory": "test_target/repo"
+    },
+    {
+      "name": "Unit Tests",
+      "command": "dotnet",
+      "args": "test --configuration Release --no-build",
+      "stopOnFailure": false,
+      "timeoutSeconds": 120,
+      "workingDirectory": "test_target/repo"
+    },
+    {
+      "name": "Run Child App EXE",
+      "command": "cmd",
+      "args": "/c start /wait ConsoleChildApp\\bin\\Release\\net8.0\\ConsoleChildApp.exe",
+      "stopOnFailure": false,
+      "timeoutSeconds": 10,
+      "workingDirectory": "test_target/repo"
+    }
+  ]
+}
