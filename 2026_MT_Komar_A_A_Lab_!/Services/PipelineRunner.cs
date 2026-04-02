@@ -8,28 +8,23 @@ using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
-public class PipelineRunner
+public class PipelineRunner(
+    ILogger<PipelineRunner> logger,
+    ConfigurationService configService,
+    GitService gitService,
+    DotNetService dotNetService,
+    ProcessRunner processRunner)
 {
-    private readonly ILogger<PipelineRunner> _logger;
-    private readonly ConfigurationService _configService;
-    private readonly GitService _gitService;
-    private readonly DotNetService _dotNetService;
-    private readonly ProcessRunner _processRunner;
-    private readonly Dictionary<string, DateTime> _stageTimings = new();
+    private const string DotnetCommand = "dotnet";
+    private const string GitCommand = "git";
+    private const int MaxOutputLength = 500;
 
-    public PipelineRunner(
-        ILogger<PipelineRunner> logger,
-        ConfigurationService configService,
-        GitService gitService,
-        DotNetService dotNetService,
-        ProcessRunner processRunner)
-    {
-        _logger = logger;
-        _configService = configService;
-        _gitService = gitService;
-        _dotNetService = dotNetService;
-        _processRunner = processRunner;
-    }
+    private readonly ILogger<PipelineRunner> _logger = logger;
+    private readonly ConfigurationService _configService = configService;
+    private readonly GitService _gitService = gitService;
+    private readonly DotNetService _dotNetService = dotNetService;
+    private readonly ProcessRunner _processRunner = processRunner;
+    private readonly Dictionary<string, DateTime> _stageTimings = [];
 
     public async Task<int> RunPipelineAsync(string configPath, string targetDir)
     {
@@ -54,7 +49,6 @@ public class PipelineRunner
         }
 
         LogPipelineSummary(stopwatch.Elapsed, config.Pipeline.Count, stats);
-
         return stats.FailedStages > 0 ? -1 : 0;
     }
 
@@ -62,15 +56,13 @@ public class PipelineRunner
     {
         stats.StageNumber++;
 
-        LogStageStart(stage, stats.StageNumber, stats.TotalStages);
-
         var stageStopwatch = Stopwatch.StartNew();
         var result = await ExecuteStageAsync(stage, targetDir);
         stageStopwatch.Stop();
 
         _stageTimings[stage.Name] = DateTime.Now;
 
-        LogStageResult(stage, result, stageStopwatch.ElapsedMilliseconds);
+        LogStageExecution(stage, stats.StageNumber, stats.TotalStages, result, stageStopwatch.ElapsedMilliseconds);
 
         if (result.IsSuccess)
         {
@@ -83,30 +75,24 @@ public class PipelineRunner
         return HandleFailedStage(stage, result);
     }
 
-    private void LogStageStart(PipelineItem stage, int stageNumber, int totalStages)
+    private void LogStageExecution(PipelineItem stage, int stageNumber, int totalStages, ProcessResult result, long durationMs)
     {
+        string status = result.IsSuccess ? "SUCCESS" : "FAILED";
+        string outputInfo = !string.IsNullOrEmpty(result.Output) && result.Output.Length < MaxOutputLength
+            ? $"\nOutput: {result.Output.Trim()}" : string.Empty;
+        string errorsInfo = !string.IsNullOrEmpty(result.Errors)
+            ? $"\nErrors: {result.Errors.Trim()}" : string.Empty;
+
         _logger.LogInformation(
-            "\n[{StageNumber}/{TotalStages}] Starting stage: {StageName}",
-            stageNumber, totalStages, stage.Name);
-        _logger.LogInformation("Command: {Command} {Args}", stage.Command, stage.Args);
-        _logger.LogInformation("Stop on failure: {StopOnFailure}", stage.StopOnFailure);
-    }
-
-    private void LogStageResult(PipelineItem stage, ProcessResult result, long durationMs)
-    {
-        _logger.LogInformation(
-            "Stage '{StageName}' completed in {DurationMs}ms",
-            stage.Name, durationMs);
-
-        if (!string.IsNullOrEmpty(result.Output) && result.Output.Length < 500)
-        {
-            _logger.LogInformation("Output: {Output}", result.Output.Trim());
-        }
-
-        if (!string.IsNullOrEmpty(result.Errors))
-        {
-            _logger.LogError("Errors: {Errors}", result.Errors.Trim());
-        }
+            "\n[{StageNumber}/{TotalStages}] Stage: {StageName}\n" +
+            "Command: {Command} {Args}\n" +
+            "Stop on failure: {StopOnFailure}\n" +
+            "Status: {Status} (ExitCode: {ExitCode}, Duration: {DurationMs}ms){Output}{Errors}",
+            stageNumber, totalStages, stage.Name,
+            stage.Command, stage.Args,
+            stage.StopOnFailure,
+            status, result.ExitCode, durationMs,
+            outputInfo, errorsInfo);
     }
 
     private async Task HandleSuccessfulStage(string stageName, string output)
@@ -121,22 +107,16 @@ public class PipelineRunner
 
     private bool HandleFailedStage(PipelineItem stage, ProcessResult result)
     {
-        _logger.LogError(
-            "[ERROR] Stage '{StageName}' failed with ExitCode {ExitCode}",
-            stage.Name, result.ExitCode);
+        _logger.LogError("[ERROR] Stage '{StageName}' failed with ExitCode {ExitCode}", stage.Name, result.ExitCode);
 
         if (result.IsTimeout)
         {
-            _logger.LogError(
-                "Stage '{StageName}' timed out after {TimeoutSeconds} seconds",
-                stage.Name, stage.TimeoutSeconds);
+            _logger.LogError("Stage '{StageName}' timed out after {TimeoutSeconds} seconds", stage.Name, stage.TimeoutSeconds);
         }
 
         if (stage.StopOnFailure)
         {
-            _logger.LogWarning(
-                "Stopping pipeline due to StopOnFailure flag on stage '{StageName}'",
-                stage.Name);
+            _logger.LogWarning("Stopping pipeline due to StopOnFailure flag on stage '{StageName}'", stage.Name);
             return false;
         }
 
@@ -146,21 +126,16 @@ public class PipelineRunner
 
     private void LogPipelineSummary(TimeSpan elapsedTime, int totalStages, PipelineStats stats)
     {
-        _logger.LogInformation("\n=== Pipeline Execution Summary ===");
-        _logger.LogInformation(
-            "Total execution time: {DurationMs}ms ({Seconds} seconds)",
-            elapsedTime.TotalMilliseconds, elapsedTime.ToString(@"ss\:ff"));
-        _logger.LogInformation(
-            "Stages: Total={TotalStages}, Successful={SuccessfulStages}, Failed={FailedStages}",
-            totalStages, stats.SuccessfulStages, stats.FailedStages);
+        string summary = $"Total execution time: {elapsedTime.TotalMilliseconds}ms ({elapsedTime:ss\\:ff} seconds)\n" +
+                         $"Stages: Total={totalStages}, Successful={stats.SuccessfulStages}, Failed={stats.FailedStages}";
 
         if (stats.FailedStages > 0)
         {
-            _logger.LogWarning("Pipeline completed with {FailedStages} failed stage(s)", stats.FailedStages);
+            _logger.LogWarning("=== Pipeline Execution Summary ===\n{Summary}", summary);
         }
         else
         {
-            _logger.LogInformation("All pipeline stages completed successfully!");
+            _logger.LogInformation("=== Pipeline Execution Summary ===\n{Summary}", summary);
         }
     }
 
@@ -171,56 +146,103 @@ public class PipelineRunner
             string workingDir = stage.WorkingDirectory ?? targetDir;
             SetEnvironmentVariables(stage);
 
-            return stage.Command.ToLower() switch
+            string command = stage.Command.ToLower();
+            string args = stage.Args;
+
+            if (command == GitCommand)
             {
-                "git" when stage.Args.StartsWith("clone") =>
-                    await _gitService.CloneAsync(workingDir, stage.Args.Replace("clone", "").Trim()),
+                return await ExecuteGitCommandAsync(stage, workingDir, args);
+            }
 
-                "git" when stage.Args.Contains("pull") =>
-                    await _gitService.PullAsync(workingDir),
+            if (command == DotnetCommand)
+            {
+                return await ExecuteDotNetCommandAsync(stage, workingDir, args);
+            }
 
-                "git" when stage.Args.Contains("branch") =>
-                    await _gitService.GetCurrentBranchAsync(workingDir),
-
-                "git" when stage.Args.Contains("status") =>
-                    await _gitService.GetStatusAsync(workingDir),
-
-                "dotnet" when stage.Args.Contains("clean") =>
-                    await _dotNetService.CleanAsync(workingDir),
-
-                "dotnet" when stage.Args.Contains("restore") =>
-                    await _dotNetService.RestoreAsync(workingDir),
-
-                "dotnet" when stage.Args.Contains("build") =>
-                    await _dotNetService.BuildAsync(workingDir),
-
-                "dotnet" when stage.Args.Contains("test") =>
-                    await _dotNetService.TestAsync(workingDir),
-                "dotnet" when stage.Args.Contains("run") =>
-                    await _dotNetService.RunAsync(workingDir, waitForExit: true),
-
-                _ => await _processRunner.RunCommandAsync(
-                    stage.Command,
-                    stage.Args,
-                    workingDir,
-                    waitForExit: true,
-                    timeoutSeconds: stage.TimeoutSeconds)
-            };
+            return await _processRunner.RunCommandAsync(
+                stage.Command,
+                stage.Args,
+                workingDir,
+                waitForExit: true,
+                timeoutSeconds: stage.TimeoutSeconds);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception executing stage '{StageName}'", stage.Name);
-            return new ProcessResult
-            {
-                Command = stage.Command,
-                Arguments = stage.Args,
-                ExitCode = -1,
-                Errors = ex.Message,
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now,
-                DurationMs = 0
-            };
+            return CreateErrorResult(stage, ex.Message);
         }
+    }
+
+    private async Task<ProcessResult> ExecuteGitCommandAsync(PipelineItem stage, string workingDir, string args)
+    {
+        if (args.StartsWith("clone"))
+        {
+            return await _gitService.CloneAsync(workingDir, args.Replace("clone", "").Trim());
+        }
+        if (args.Contains("pull"))
+        {
+            return await _gitService.PullAsync(workingDir);
+        }
+        if (args.Contains("branch"))
+        {
+            return await _gitService.GetCurrentBranchAsync(workingDir);
+        }
+        if (args.Contains("status"))
+        {
+            return await _gitService.GetStatusAsync(workingDir);
+        }
+
+        return await _processRunner.RunCommandAsync(
+            stage.Command,
+            stage.Args,
+            workingDir,
+            waitForExit: true,
+            timeoutSeconds: stage.TimeoutSeconds);
+    }
+
+    private async Task<ProcessResult> ExecuteDotNetCommandAsync(PipelineItem stage, string workingDir, string args)
+    {
+        if (args.Contains("clean"))
+        {
+            return await _dotNetService.CleanAsync(workingDir);
+        }
+        if (args.Contains("restore"))
+        {
+            return await _dotNetService.RestoreAsync(workingDir);
+        }
+        if (args.Contains("build"))
+        {
+            return await _dotNetService.BuildAsync(workingDir);
+        }
+        if (args.Contains("test"))
+        {
+            return await _dotNetService.TestAsync(workingDir);
+        }
+        if (args.Contains("run"))
+        {
+            return await _dotNetService.RunAsync(workingDir, waitForExit: true);
+        }
+
+        return await _processRunner.RunCommandAsync(
+            stage.Command,
+            stage.Args,
+            workingDir,
+            waitForExit: true,
+            timeoutSeconds: stage.TimeoutSeconds);
+    }
+
+    private ProcessResult CreateErrorResult(PipelineItem stage, string errorMessage)
+    {
+        return new ProcessResult
+        {
+            Command = stage.Command,
+            Arguments = stage.Args,
+            ExitCode = -1,
+            Errors = errorMessage,
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now,
+            DurationMs = 0
+        };
     }
 
     private void SetEnvironmentVariables(PipelineItem stage)
@@ -233,9 +255,7 @@ public class PipelineRunner
         foreach (var env in stage.Environment)
         {
             Environment.SetEnvironmentVariable(env.Key, env.Value);
-            _logger.LogDebug(
-                "Set environment variable: {EnvKey}={EnvValue}",
-                env.Key, env.Value);
+            _logger.LogDebug("Set environment variable: {EnvKey}={EnvValue}", env.Key, env.Value);
         }
     }
 
@@ -249,15 +269,11 @@ public class PipelineRunner
             var artifactFile = Path.Combine(artifactsDir, $"{stageName}_{DateTime.Now:yyyyMMdd_HHmmss}.log");
             await File.WriteAllTextAsync(artifactFile, output);
 
-            _logger.LogInformation(
-                "Saved artifact for stage '{StageName}' to {ArtifactFile}",
-                stageName, artifactFile);
+            _logger.LogInformation("Saved artifact for stage '{StageName}' to {ArtifactFile}", stageName, artifactFile);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
-                "Failed to save artifact for stage '{StageName}': {ErrorMessage}",
-                stageName, ex.Message);
+            _logger.LogWarning(ex, "Failed to save artifact for stage '{StageName}'", stageName);
         }
     }
 }
