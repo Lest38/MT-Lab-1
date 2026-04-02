@@ -40,15 +40,8 @@ public class GitService
                 _logger.LogWarning("Target directory {TargetDir} is not empty. Found {FileCount} non-log files.",
                     cloneTargetDir, files.Length);
 
-                return new ProcessResult
-                {
-                    Command = "git",
-                    Arguments = $"clone {repoUrl}",
-                    ExitCode = 0,
-                    Output = $"Directory {cloneTargetDir} already exists and contains {files.Length} files. Skipping clone.",
-                    StartTime = DateTime.Now,
-                    EndTime = DateTime.Now,
-                };
+                return CreateSuccessResult("git", $"clone {repoUrl}",
+                    $"Directory {cloneTargetDir} already exists and contains {files.Length} files. Skipping clone.");
             }
         }
         else
@@ -66,7 +59,7 @@ public class GitService
             "git",
             $"clone {repoUrl} {cloneTargetDir}",
             ".",
-            timeoutSeconds: 300
+            timeoutSeconds: TimeoutDefaults.Clone
         );
     }
 
@@ -74,16 +67,7 @@ public class GitService
     {
         if (!Directory.Exists(targetDir))
         {
-            _logger.LogError("Directory does not exist: {TargetDir}", targetDir);
-            return new ProcessResult
-            {
-                Command = "git",
-                Arguments = "pull",
-                ExitCode = -1,
-                Errors = $"Directory {targetDir} does not exist",
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now
-            };
+            return CreateErrorResult("pull", targetDir, "Directory does not exist");
         }
 
         _logger.LogInformation("Pulling latest changes in {TargetDir}", targetDir);
@@ -91,7 +75,7 @@ public class GitService
             "git",
             "pull",
             targetDir,
-            timeoutSeconds: 60
+            timeoutSeconds: TimeoutDefaults.Pull
         );
     }
 
@@ -99,15 +83,7 @@ public class GitService
     {
         if (!Directory.Exists(targetDir))
         {
-            return new ProcessResult
-            {
-                Command = "git",
-                Arguments = "rev-parse --abbrev-ref HEAD",
-                ExitCode = -1,
-                Errors = $"Directory {targetDir} does not exist",
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now
-            };
+            return CreateErrorResult("rev-parse --abbrev-ref HEAD", targetDir, "Directory does not exist");
         }
 
         return await _processRunner.RunCommandAsync(
@@ -121,15 +97,7 @@ public class GitService
     {
         if (!Directory.Exists(targetDir))
         {
-            return new ProcessResult
-            {
-                Command = "git",
-                Arguments = "status --short",
-                ExitCode = -1,
-                Errors = $"Directory {targetDir} does not exist",
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now
-            };
+            return CreateErrorResult("status --short", targetDir, "Directory does not exist");
         }
 
         return await _processRunner.RunCommandAsync(
@@ -137,5 +105,31 @@ public class GitService
             "status --short",
             targetDir
         );
+    }
+
+    private ProcessResult CreateErrorResult(string command, string targetDir, string errorMessage)
+    {
+        return new ProcessResult
+        {
+            Command = "git",
+            Arguments = command,
+            ExitCode = -1,
+            Errors = $"{errorMessage}: {targetDir}",
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now
+        };
+    }
+
+    private ProcessResult CreateSuccessResult(string command, string arguments, string output)
+    {
+        return new ProcessResult
+        {
+            Command = command,
+            Arguments = arguments,
+            ExitCode = 0,
+            Output = output,
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now
+        };
     }
 }
