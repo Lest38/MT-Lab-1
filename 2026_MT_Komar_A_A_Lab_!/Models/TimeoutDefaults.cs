@@ -8,6 +8,6 @@
         public const int Test = 120;
         public const int Restore = 120;
         public const int Clean = 60;
-        public const int General = 300;
+        public const int Default = 300;
     }
 }

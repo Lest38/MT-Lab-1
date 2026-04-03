@@ -23,7 +23,7 @@ public class DotNetService(
             args,
             targetDir,
             waitForExit,
-            timeoutSeconds: TimeoutDefaults.General
+            timeoutSeconds: TimeoutDefaults.Default
         );
     }
 

@@ -82,7 +82,7 @@ class Program
         services.AddLogging(configure =>
         {
             configure.AddConsole();
-            configure.AddProvider(new FileLoggerProvider(logFilePath));
+            configure.AddProvider(new AsyncFileLoggerProvider(logFilePath));
             configure.SetMinimumLevel(LogLevel.Debug);
         });
 
