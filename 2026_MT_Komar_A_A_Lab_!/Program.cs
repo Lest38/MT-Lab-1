@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__;
 
-class Program
+static class Program
 {
     static async Task Main(string[] args)
     {
@@ -47,7 +47,7 @@ class Program
 
         var serviceProvider = services.BuildServiceProvider();
         var pipelineRunner = serviceProvider.GetRequiredService<PipelineRunner>();
-        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+        var logger = serviceProvider.GetRequiredService<ILogger<PipelineRunner>>();
 
         try
         {

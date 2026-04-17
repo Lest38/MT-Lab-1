@@ -11,7 +11,7 @@ public class ProcessRunner : IDisposable
     private Process? _currentProcess;
     private bool _disposed;
 
-    public async Task<ProcessResult> RunCommandAsync(
+    public static async Task<ProcessResult> RunCommandAsync(
         string fileName,
         string arguments,
         string workingDirectory,

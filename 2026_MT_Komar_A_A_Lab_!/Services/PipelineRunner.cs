@@ -12,8 +12,7 @@ public class PipelineRunner(
     ILogger<PipelineRunner> logger,
     ConfigurationService configService,
     GitService gitService,
-    DotNetService dotNetService,
-    ProcessRunner processRunner)
+    DotNetService dotNetService)
 {
     private const string DotnetCommand = "dotnet";
     private const string GitCommand = "git";
@@ -23,7 +22,6 @@ public class PipelineRunner(
     private readonly ConfigurationService _configService = configService;
     private readonly GitService _gitService = gitService;
     private readonly DotNetService _dotNetService = dotNetService;
-    private readonly ProcessRunner _processRunner = processRunner;
     private readonly Dictionary<string, DateTime> _stageTimings = [];
 
     public async Task<int> RunPipelineAsync(string configPath, string targetDir)
@@ -159,7 +157,7 @@ public class PipelineRunner(
                 return await ExecuteDotNetCommandAsync(stage, workingDir, args);
             }
 
-            return await _processRunner.RunCommandAsync(
+            return await ProcessRunner.RunCommandAsync(
                 stage.Command,
                 stage.Args,
                 workingDir,
@@ -185,14 +183,14 @@ public class PipelineRunner(
         }
         if (args.Contains("branch"))
         {
-            return await _gitService.GetCurrentBranchAsync(workingDir);
+            return await GitService.GetCurrentBranchAsync(workingDir);
         }
         if (args.Contains("status"))
         {
-            return await _gitService.GetStatusAsync(workingDir);
+            return await GitService.GetStatusAsync(workingDir);
         }
 
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             stage.Command,
             stage.Args,
             workingDir,
@@ -223,7 +221,7 @@ public class PipelineRunner(
             return await _dotNetService.RunAsync(workingDir, waitForExit: true);
         }
 
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             stage.Command,
             stage.Args,
             workingDir,
@@ -231,7 +229,7 @@ public class PipelineRunner(
             timeoutSeconds: stage.TimeoutSeconds);
     }
 
-    private ProcessResult CreateErrorResult(PipelineItem stage, string errorMessage)
+    private static ProcessResult CreateErrorResult(PipelineItem stage, string errorMessage)
     {
         return new ProcessResult
         {

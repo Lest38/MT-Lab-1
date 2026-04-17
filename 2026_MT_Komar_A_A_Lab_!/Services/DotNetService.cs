@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
 public class DotNetService(
-    ProcessRunner processRunner,
     ProjectResolver projectResolver,
     ILogger<DotNetService> logger)
 {
-    private readonly ProcessRunner _processRunner = processRunner;
     private readonly ProjectResolver _projectResolver = projectResolver;
     private readonly ILogger<DotNetService> _logger = logger;
 
@@ -18,7 +16,7 @@ public class DotNetService(
         args = _projectResolver.ResolveProjectIfNeeded(targetDir, args);
 
         _logger.LogInformation("Running: dotnet {Args} in {TargetDir}", args, targetDir);
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             "dotnet",
             args,
             targetDir,

@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace _2026_MT_Komar_A_A_Lab__.Services;
 
-public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
+public class GitService(ILogger<GitService> logger)
 {
-    private readonly ProcessRunner _processRunner = processRunner;
     private readonly ILogger<GitService> _logger = logger;
 
     public async Task<ProcessResult> CloneAsync(string targetDir, string repoUrl)
@@ -49,7 +48,7 @@ public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
         }
 
         _logger.LogInformation("Cloning repository {RepoUrl} to {TargetDir}", repoUrl, cloneTargetDir);
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             "git",
             $"clone {repoUrl} {cloneTargetDir}",
             ".",
@@ -63,7 +62,7 @@ public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
             return errorResult!;
 
         _logger.LogInformation("Pulling latest changes in {TargetDir}", targetDir);
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             "git",
             "pull",
             targetDir,
@@ -71,31 +70,31 @@ public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
         );
     }
 
-    public async Task<ProcessResult> GetCurrentBranchAsync(string targetDir)
+    public static async Task<ProcessResult> GetCurrentBranchAsync(string targetDir)
     {
         if (!TryEnsureDirectoryExists(targetDir, out var errorResult))
             return errorResult!;
 
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             "git",
             "rev-parse --abbrev-ref HEAD",
             targetDir
         );
     }
 
-    public async Task<ProcessResult> GetStatusAsync(string targetDir)
+    public static async Task<ProcessResult> GetStatusAsync(string targetDir)
     {
         if (!TryEnsureDirectoryExists(targetDir, out var errorResult))
             return errorResult!;
 
-        return await _processRunner.RunCommandAsync(
+        return await ProcessRunner.RunCommandAsync(
             "git",
             "status --short",
             targetDir
         );
     }
 
-    private bool TryEnsureDirectoryExists(string targetDir, out ProcessResult? errorResult)
+    private static bool TryEnsureDirectoryExists(string targetDir, out ProcessResult? errorResult)
     {
         if (!Directory.Exists(targetDir))
         {
@@ -106,7 +105,7 @@ public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
         return true;
     }
 
-    private ProcessResult CreateErrorResult(string command, string targetDir, string errorMessage)
+    private static ProcessResult CreateErrorResult(string command, string targetDir, string errorMessage)
     {
         return new ProcessResult
         {
@@ -119,7 +118,7 @@ public class GitService(ProcessRunner processRunner, ILogger<GitService> logger)
         };
     }
 
-    private ProcessResult CreateSuccessResult(string command, string arguments, string output)
+    private static ProcessResult CreateSuccessResult(string command, string arguments, string output)
     {
         return new ProcessResult
         {

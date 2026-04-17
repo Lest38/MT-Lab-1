@@ -1,17 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
+using System;
 
 namespace _2026_MT_Komar_A_A_Lab__.Utilities
 {
-    public class FileLoggerProvider : ILoggerProvider
+    public class FileLoggerProvider(string filePath) : ILoggerProvider
     {
-        private readonly string _filePath;
+        private readonly string _filePath = filePath;
         private FileLogger? _logger;
         private bool _disposed;
-
-        public FileLoggerProvider(string filePath)
-        {
-            _filePath = filePath;
-        }
 
         public ILogger CreateLogger(string categoryName)
         {
